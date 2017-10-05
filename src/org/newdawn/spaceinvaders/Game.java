@@ -232,6 +232,10 @@ public class Game extends Canvas {
 		entities.add(shot);
 	}
 	
+	public void AddEntity(Entity e) {
+		entities.add(e);
+	}
+	
 	/**
 	 * The main game loop. This loop is running during all game
 	 * play as is responsible for the following activities:
