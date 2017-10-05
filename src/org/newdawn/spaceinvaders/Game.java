@@ -140,7 +140,16 @@ public class Game extends Canvas {
 		alienCount = 0;
 		for (int row=0;row<5;row++) {
 			for (int x=0;x<12;x++) {
-				Entity alien = new PowerfulEntity(this,"sprites/alien.gif",100+(x*50),(50)+row*30);
+				// basic alien
+				Entity alien = new AlienEntity(this,"sprites/alien.gif",100+(x*50),(50)+row*30);
+				entities.add(alien);
+				alienCount++;
+			}
+		}
+		for (int row=5;row<6;row++) {
+			for (int x=0;x<12;x++) {
+				// tough alien - art from https://opengameart.org/content/space-shooter-top-down-2d-pixel-art
+				Entity alien = new PowerfulEntity(this,"sprites/enemy.gif",100+(x*50),(50)+row*30);
 				entities.add(alien);
 				alienCount++;
 			}
