@@ -40,6 +40,8 @@ public class Game extends Canvas {
 	private ArrayList removeList = new ArrayList();
 	/** The entity representing the player */
 	private Entity ship;
+	/** The list of enemy entities */
+	private ArrayList aliens = new ArrayList();
 	/** The speed at which the player's ship should move (pixels/sec) */
 	private double moveSpeed = 300;
 	/** The time at which last fired a shot */
@@ -59,6 +61,14 @@ public class Game extends Canvas {
 	private boolean rightPressed = false;
 	/** True if we are firing */
 	private boolean firePressed = false;
+	/** True if we are firing missile */
+	private boolean missilePressed = false;
+	/** True if we are firing spread */
+	private boolean spreadPressed = false;
+	/** True if we are firing bomb */
+	private boolean bombPressed = false;
+	/** Non null if the bomb is alive */
+	private BombEntity activeBomb = null;
 	/** True if game logic needs to be applied this loop, normally as a result of a game event */
 	private boolean logicRequiredThisLoop = false;
 	
@@ -139,18 +149,20 @@ public class Game extends Canvas {
 		// create a block of aliens (5 rows, by 12 aliens, spaced evenly)
 		alienCount = 0;
 		for (int row=0;row<5;row++) {
-			for (int x=0;x<12;x++) {
+			for (int x=0;x<13;x++) {
 				// basic alien
 				Entity alien = new AlienEntity(this,"sprites/alien.gif",100+(x*50),(50)+row*30);
 				entities.add(alien);
+				aliens.add(alien);
 				alienCount++;
 			}
 		}
-		for (int row=0;row<5;row++) {
-			for (int x=-1;x<13;x+=13) {
+		for (int row=5;row<6;row++) {
+			for (int x=0;x<13;x+=3) {
 				// tough alien - art from https://opengameart.org/content/space-shooter-top-down-2d-pixel-art
 				Entity alien = new PowerfulEntity(this,"sprites/enemy.gif",100+(x*50),(50)+row*30);
 				entities.add(alien);
+				aliens.add(alien);
 				alienCount++;
 			}
 		}
@@ -173,6 +185,9 @@ public class Game extends Canvas {
 	 */
 	public void removeEntity(Entity entity) {
 		removeList.add(entity);
+		if (entity instanceof AlienEntity) {
+			aliens.remove(entity);
+		}
 	}
 	
 	/**
@@ -230,6 +245,65 @@ public class Game extends Canvas {
 		lastFire = System.currentTimeMillis();
 		ShotEntity shot = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30, Math.PI / 2);
 		entities.add(shot);
+	}
+	
+	public void tryToFireMissile() {
+		// check that we have waiting long enough to fire
+		if (System.currentTimeMillis() - lastFire < firingInterval) {
+			return;
+		}
+		
+		// if we waited long enough, create the shot entity, and record the time.
+		lastFire = System.currentTimeMillis();
+		MissileEntity shot = new MissileEntity(this,"sprites/dot.gif",ship.getX()+10,ship.getY()-30, (Entity)(aliens.get(aliens.size()-1)), 100, 0);
+		MissileEntity shot2 = new MissileEntity(this,"sprites/dot.gif",ship.getX()+10,ship.getY()-30, (Entity)(aliens.get(aliens.size()-1)), -100, 0);
+		entities.add(shot);
+		entities.add(shot2);
+	}
+	
+	public void tryToFireSpread() {
+		// check that we have waiting long enough to fire
+		if (System.currentTimeMillis() - lastFire < firingInterval) {
+			return;
+		}
+		
+		// if we waited long enough, create the shot entity, and record the time.
+		lastFire = System.currentTimeMillis();
+		ShotEntity shot = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30, Math.PI * 0.5);
+		ShotEntity shot2 = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30, Math.PI * 0.375);
+		ShotEntity shot3 = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30, Math.PI * 0.625);
+		entities.add(shot);
+		entities.add(shot2);
+		entities.add(shot3);
+	}
+	
+	public void tryToFireBomb() {
+		// check that we have waiting long enough to fire
+		if (System.currentTimeMillis() - lastFire < firingInterval) {
+			return;
+		}
+		
+		if (activeBomb == null) {
+			// if we waited long enough, create the shot entity, and record the time.
+			lastFire = System.currentTimeMillis();
+			BombEntity shot = new BombEntity(this,"sprites/bomb.gif",ship.getX()+10, ship.getY()-30, Math.PI * 0.5);
+			activeBomb = shot;
+			entities.add(shot);
+		} else {
+			tryToFireBomb(activeBomb.x, activeBomb.y);
+		}
+	}
+	
+	public void tryToFireBomb(double x, double y) {
+		// DO NOT check that we have waiting long enough to fire
+		if (activeBomb != null) {
+			removeEntity(activeBomb);
+			activeBomb = null;
+		}
+		
+		// create explosion
+		ExplosionEntity explosion = new ExplosionEntity(this, "sprites/explosion.gif",(int)x-40 ,(int)y-40);
+		entities.add(explosion);
 	}
 	
 	public void AddEntity(Entity e) {
@@ -311,6 +385,11 @@ public class Game extends Canvas {
 				logicRequiredThisLoop = false;
 			}
 			
+			// draw the lives UI
+			for (int i=0; i<((ShipEntity)ship).getLives()-1; i++) {
+				ship.sprite.draw(g, this.getWidth()-40 - (40*i),10);
+			}
+			
 			// if we're waiting for an "any key" press then draw the 
 			// current message 
 			if (waitingForKeyPress) {
@@ -338,6 +417,15 @@ public class Game extends Canvas {
 			// if we're pressing fire, attempt to fire
 			if (firePressed) {
 				tryToFire();
+			}
+			if (missilePressed) {
+				tryToFireMissile();
+			}
+			if (spreadPressed) {
+				tryToFireSpread();
+			}
+			if (bombPressed) {
+				tryToFireBomb();
 			}
 			
 			// finally pause for a bit. Note: this should run us at about
@@ -387,6 +475,15 @@ public class Game extends Canvas {
 			if (e.getKeyCode() == KeyEvent.VK_SPACE) {
 				firePressed = true;
 			}
+			if (e.getKeyCode() == KeyEvent.VK_M) {
+				missilePressed = true;
+			}
+			if (e.getKeyCode() == KeyEvent.VK_N) {
+				spreadPressed = true;
+			}
+			if (e.getKeyCode() == KeyEvent.VK_B) {
+				bombPressed = true;
+			}
 		} 
 		
 		/**
@@ -409,6 +506,15 @@ public class Game extends Canvas {
 			}
 			if (e.getKeyCode() == KeyEvent.VK_SPACE) {
 				firePressed = false;
+			}
+			if (e.getKeyCode() == KeyEvent.VK_M) {
+				missilePressed = false;
+			}
+			if (e.getKeyCode() == KeyEvent.VK_N) {
+				spreadPressed = false;
+			}
+			if (e.getKeyCode() == KeyEvent.VK_B) {
+				bombPressed = false;
 			}
 		}
 

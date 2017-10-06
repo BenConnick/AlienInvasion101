@@ -1,21 +1,18 @@
 package org.newdawn.spaceinvaders;
 
-/**
- * An entity representing a shot fired by the player's ship
- * 
- * @author Kevin Glass
- */
-public class ShotEntity extends Entity {
-	/** The speed at which the shot moves */
-	private double moveSpeed = -300;
-	/** The angle in radians at which the shot is fired (0 is right) */
-	private double angleRads = 0;
+public class MissileEntity extends Entity {
+	/** The speed at which the missile moves */
+	private double moveSpeed = 300;
 	/** The game in which this entity exists */
 	private Game game;
 	/** True if this shot has been "used", i.e. its hit something */
-	protected boolean used = false;
+	private boolean used = false;
 	/** True if the shot collides with the player and NOT enemies */
-	protected boolean collidesWithPlayer = false;
+	private boolean collidesWithPlayer = false;
+	/** The target for the seeking behavior */
+	private Entity target = null;
+	/** acceleration vector */
+	private Vec2 acceleration;
 	
 	/**
 	 * Create a new shot
@@ -25,18 +22,16 @@ public class ShotEntity extends Entity {
 	 * @param x The initial x location of the shot
 	 * @param y The initial y location of the shot
 	 */
-	public ShotEntity(Game game,String sprite,int x,int y, double angleRads) {
+	public MissileEntity(Game game,String sprite,int x,int y, Entity target, double dx, double dy) {
 		super(sprite,x,y);
 		
 		this.game = game;
 		
-		this.angleRads = angleRads;
+		this.target = target;
 		
-		dx = moveSpeed * Math.cos(angleRads);
-		dy = moveSpeed * Math.sin(angleRads);
-		
-		// if the shot is heading downward, it's going towards the p
-		collidesWithPlayer = dy > 0;
+		// set initial velocity
+		this.dx = dx;
+		this.dy = dy;
 	}
 	
 	/**
@@ -46,9 +41,33 @@ public class ShotEntity extends Entity {
 	 */
 	public void move(long delta) {
 		// proceed with normal move
-		super.move(delta);
+				super.move(delta);
 		
-		// if we shot off the screen, remove ourselfs
+		// has the target been removed / invalidated?
+		if (target == null || target.x < 0 || target.y < 0 || target.x > game.getWidth() || target.y > game.getHeight()) {
+			// deactivate
+			game.removeEntity(this);
+			used = true;
+		}
+		
+		// create a look-at vector (for acceleration)
+		Vec2 lookVec = new Vec2(target.x - x, target.y - y);
+		// normalize
+		lookVec.normalize();
+		
+		Vec2 velocity = new Vec2(dx + lookVec.x * 10, dy + lookVec.y * 10);
+		
+		if (velocity.sqrMagnitude() > moveSpeed * moveSpeed) {
+			velocity.clamp(moveSpeed);
+		}
+		
+		//System.out.println(velocity.y);
+		
+		// set velocity
+		dx = velocity.x;
+		dy = velocity.y; 
+		
+		// if we shot off the screen, remove ourself
 		if (y < -100) {
 			game.removeEntity(this);
 		}

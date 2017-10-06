@@ -30,7 +30,7 @@ public class PowerfulEntity extends AlienEntity {
 	 * @param collider
 	 */
 	@Override
-	public void shot(ShotEntity collider) {
+	public void shot(Entity other) {
 		health -= 1;
 		if (health <=0) {
 			// notify 

@@ -8,6 +8,8 @@ package org.newdawn.spaceinvaders;
 public class ShipEntity extends Entity {
 	/** The game in which the ship exists */
 	private Game game;
+	/** Number of times the player can get shot */
+	private int health = 3;
 	
 	/**
 	 * Create a new entity to represent the players ship
@@ -55,5 +57,25 @@ public class ShipEntity extends Entity {
 		if (other instanceof AlienEntity) {
 			game.notifyDeath();
 		}
+	}
+	
+	/**
+	 * Notification that the player's ship was shot
+	 * 
+	 * @param other
+	 */
+	public void shot(Entity other) {
+		health -= 1;
+		if (health <= 0) {
+			game.notifyDeath();
+		}
+	}
+	
+	/**
+	 * Gets the health / lives of the player
+	 * @return lives
+	 */
+	public int getLives() {
+		return health;
 	}
 }

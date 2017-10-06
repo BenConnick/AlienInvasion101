@@ -10,6 +10,8 @@ public class AlienEntity extends Entity {
 	private double moveSpeed = 75;
 	/** The game in which the entity exists */
 	private Game game;
+	/** True if alive */
+	private boolean active = true;
 	
 	/**
 	 * Create a new alien entity
@@ -77,7 +79,10 @@ public class AlienEntity extends Entity {
 	 * 
 	 * @param collider
 	 */
-	public void shot(ShotEntity collider) {
+	public void shot(Entity collider) {
+		if (!active) return;
+		// deactivate 
+		active = false;
 		// notify 
 		game.notifyAlienKilled();
 		// kill if shot
