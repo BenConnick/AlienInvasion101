@@ -53,7 +53,7 @@ public class PowerfulEntity extends AlienEntity {
 		
 		// if we waited long enough, create the shot entity, and record the time.
 		lastShotTime = System.currentTimeMillis();
-		ShotEntity shot = new ShotEntity(game,"sprites/shot.gif",(int)this.x+10,(int)this.y-30);
+		ShotEntity shot = new ShotEntity(game,"sprites/shotFlipped.gif",(int)this.x+10,(int)this.y+30, -Math.PI/2);
 		game.AddEntity(shot);
 	}
 }

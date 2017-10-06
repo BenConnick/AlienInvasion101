@@ -146,8 +146,8 @@ public class Game extends Canvas {
 				alienCount++;
 			}
 		}
-		for (int row=5;row<6;row++) {
-			for (int x=0;x<12;x++) {
+		for (int row=0;row<5;row++) {
+			for (int x=-1;x<13;x+=13) {
 				// tough alien - art from https://opengameart.org/content/space-shooter-top-down-2d-pixel-art
 				Entity alien = new PowerfulEntity(this,"sprites/enemy.gif",100+(x*50),(50)+row*30);
 				entities.add(alien);
@@ -228,7 +228,7 @@ public class Game extends Canvas {
 		
 		// if we waited long enough, create the shot entity, and record the time.
 		lastFire = System.currentTimeMillis();
-		ShotEntity shot = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30);
+		ShotEntity shot = new ShotEntity(this,"sprites/shot.gif",ship.getX()+10,ship.getY()-30, Math.PI / 2);
 		entities.add(shot);
 	}
 	
